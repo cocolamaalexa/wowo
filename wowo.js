@@ -23,6 +23,7 @@
                 element: el,
                 parent: el.parentNode,
                 nextSibling: el.nextSibling,
+                innerHTML: el.innerHTML,
                 style: {
                     backgroundColor: el.style.backgroundColor,
                     color: el.style.color,
@@ -42,7 +43,7 @@
     const toolbar = document.createElement('div');
     toolbar.id = 'element-manipulator-toolbar';
     toolbar.innerHTML = `
-        <div style="position: fixed; top: 16px; right: 16px; z-index: 2147483647; background: #18181b; color: #f4f4f5; padding: 12px; border-radius: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; gap: 10px; pointer-events: auto; border: 1px solid #27272a; width: 140px; box-sizing: border-box;">
+        <div style="position: fixed; top: 16px; right: 16px; z-index: 2147483647; background: #18181b; color: #f4f4f5; padding: 12px; border-radius: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; gap: 8px; pointer-events: auto; border: 1px solid #27272a; width: 140px; box-sizing: border-box;">
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
                 <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; color: #a1a1aa; font-size: 11px;">
                     BG <input type="color" id="em-bg-color-picker" style="cursor: pointer; border: 1px solid #3f3f46; border-radius: 4px; width: 22px; height: 22px; background: none; padding: 0;">
@@ -55,11 +56,12 @@
                 <span>Font</span>
                 <input type="range" id="em-font-size-slider" min="8" max="72" value="16" style="cursor: pointer; width: 85px; accent-color: #3b82f6;">
             </div>
-            <div style="height: 1px; width: 100%; background: #27272a; margin: 2px 0;"></div>
-            <div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
-                <button id="em-revert-btn" title="Revert last change" style="background: #3b82f6; color: white; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">↩</button>
-                <button id="em-delete-btn" title="Delete selected elements" style="background: #ef4444; color: white; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🗑</button>
-                <button id="em-close-btn" title="Close completely" style="background: #3f3f46; color: white; border: none; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 12px;">✕</button>
+            <input type="text" id="em-text-input" placeholder="Edit text..." style="background: #27272a; border: 1px solid #3f3f46; border-radius: 6px; color: #f4f4f5; padding: 6px 8px; font-size: 11px; outline: none; width: 100%; box-sizing: border-box;">
+            <div style="height: 1px; width: 100%; background: #27272a; margin: 1px 0;"></div>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 6px;">
+                <button id="em-revert-btn" title="Revert last change" style="background: #3b82f6; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">↩</button>
+                <button id="em-delete-btn" title="Delete selected elements" style="background: #ef4444; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🗑</button>
+                <button id="em-close-btn" title="Close completely" style="background: #3f3f46; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 11px;">✕</button>
             </div>
         </div>
         <div id="em-outline" style="position: fixed; border: 2px dashed #3b82f6; background: rgba(59, 130, 246, 0.05); z-index: 2147483646; display: none; pointer-events: none;"></div>
@@ -74,6 +76,7 @@
     const bgColorPicker = document.getElementById('em-bg-color-picker');
     const textColorPicker = document.getElementById('em-text-color-picker');
     const fontSizeSlider = document.getElementById('em-font-size-slider');
+    const textInput = document.getElementById('em-text-input');
     const revertBtn = document.getElementById('em-revert-btn');
     const deleteBtn = document.getElementById('em-delete-btn');
     const closeBtn = document.getElementById('em-close-btn');
@@ -109,12 +112,21 @@
     }
 
     function syncControls() {
-        if (selectedElements.size === 0) return;
+        if (selectedElements.size === 0) {
+            textInput.value = '';
+            return;
+        }
         const firstEl = Array.from(selectedElements)[0];
         const computed = window.getComputedStyle(firstEl);
         const currentSize = parseFloat(computed.fontSize);
         if (!isNaN(currentSize)) {
             fontSizeSlider.value = currentSize;
+        }
+        // If single element selected, sync its text content if it doesn't have complex children
+        if (selectedElements.size === 1) {
+            textInput.value = firstEl.innerText || '';
+        } else {
+            textInput.value = '';
         }
     }
 
@@ -125,7 +137,6 @@
             return;
         }
 
-        // Calculate bounding box encompassing all selected elements
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         let validCount = 0;
 
@@ -248,7 +259,6 @@
 
             const selRect = selectionBox.getBoundingClientRect();
             
-            // If it was just a simple click (not much drag)
             if (selRect.width < 5 && selRect.height < 5) {
                 const target = getVisibleElementAtPoint(mousedownX, mousedownY);
                 if (target) {
@@ -263,7 +273,6 @@
                 return;
             }
 
-            // Box selection across all elements
             const allElements = document.querySelectorAll('body *');
             const newlySelected = new Set();
 
@@ -273,7 +282,6 @@
                 if (!isVisible(el)) return;
 
                 const rect = el.getBoundingClientRect();
-                // Check intersection between selection box and element rect
                 if (!(rect.right < selRect.left || 
                       rect.left > selRect.right || 
                       rect.bottom < selRect.top || 
@@ -297,7 +305,6 @@
         startX = e.clientX;
         startY = e.clientY;
         
-        // Use outline bounds as base reference for resizing multiple elements together
         const outlineRect = outline.getBoundingClientRect();
         startWidth = Math.max(10, outlineRect.width);
         startHeight = Math.max(10, outlineRect.height);
@@ -339,6 +346,20 @@
         }
     });
 
+    textInput.addEventListener('input', (e) => {
+        if (selectedElements.size === 1) {
+            const el = Array.from(selectedElements)[0];
+            el.innerText = e.target.value;
+            updateOverlay();
+        }
+    });
+
+    textInput.addEventListener('focus', () => {
+        if (selectedElements.size === 1) {
+            saveState();
+        }
+    });
+
     revertBtn.addEventListener('click', () => {
         if (historyStack.length === 0) return;
         const lastStates = historyStack.pop();
@@ -356,6 +377,7 @@
                     }
                 }
                 
+                state.element.innerHTML = state.innerHTML;
                 state.element.style.backgroundColor = state.style.backgroundColor;
                 state.element.style.color = state.style.color;
                 state.element.style.fontSize = state.style.fontSize;
@@ -374,6 +396,7 @@
             saveState();
             selectedElements.forEach(el => el.remove());
             selectedElements.clear();
+            textInput.value = '';
             outline.style.display = 'none';
             resizeHandle.style.display = 'none';
         }
