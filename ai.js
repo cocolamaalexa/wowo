@@ -1,4 +1,8 @@
 (function () {
+    // Version stamp for cache checking
+    const SCRIPT_VERSION = "2026-10-06-v3 (Screenshot SVG)";
+    console.log(`[AI Bookmarklet] Running version: ${SCRIPT_VERSION}`);
+
     if (document.getElementById("ai-select-overlay")) return;
 
     const API_KEY = window.USER_GEMINI_API_KEY;
@@ -94,8 +98,6 @@
         showLoading(e.clientX, e.clientY);
 
         try {
-            // Since you have a CORS/CSP bypass, we can use SVG data-uri foreignObject rendering 
-            // to cleanly snap an exact pixel-accurate image of the rendered DOM.
             const htmlContent = document.documentElement.outerHTML;
             const svgData = `
                 <svg xmlns="http://www.w3.org/2000/svg" width="${document.documentElement.scrollWidth}" height="${document.documentElement.scrollHeight}">
@@ -142,7 +144,7 @@
         loadBox.id = "ai-result-box";
         loadBox.style.left = Math.min(window.innerWidth - 370, Math.max(10, x)) + "px";
         loadBox.style.top = Math.min(window.innerHeight - 100, Math.max(10, y)) + "px";
-        loadBox.innerText = "Snapping region...";
+        loadBox.innerText = `Snapping region... [${SCRIPT_VERSION}]`;
         document.body.appendChild(loadBox);
     }
 
